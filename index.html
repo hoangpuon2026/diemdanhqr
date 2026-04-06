@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Điểm danh QR</title>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <title>Điểm danh QR - Giáo xứ Ninh Phát</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -35,14 +35,14 @@
             padding: 18px;
             font-size: 18px;
             font-weight: bold;
+            text-decoration: none;
             border-radius: 48px;
             margin: 16px 0;
             border: none;
             width: 100%;
             cursor: pointer;
         }
-        #qr-reader { width: 100%; max-width: 500px; margin: 0 auto; display: none; }
-        .stop-btn { background: #ea4335; display: none; margin-top: 0; }
+        .scan-btn:active { transform: scale(0.98); }
         .result-box { background: #e8f0fe; border-radius: 16px; padding: 16px; margin: 16px 0; display: none; }
         .result-box.success { background: #e6f4ea; border-left: 4px solid #34a853; }
         .result-box.error { background: #fce8e6; border-left: 4px solid #ea4335; }
@@ -54,42 +54,74 @@
         .badge-ra { background: #e8f0fe; color: #1a73e8; }
         .loading { text-align: center; padding: 20px; color: #888; }
         .note { font-size: 11px; color: #888; text-align: center; margin-top: 20px; }
+        canvas { max-width: 100%; max-height: 250px; margin: 16px 0; }
+        .chart-container { text-align: center; }
+        h3 { font-size: 16px; margin: 0 0 12px 0; color: #1a73e8; }
+        .admin-panel { margin-top: 20px; border-top: 1px solid #e0e0e0; padding-top: 16px; }
+        details summary { color: #1a73e8; cursor: pointer; font-size: 14px; }
+        .admin-btn { background: #ea4335; color: white; border: none; padding: 8px 16px; border-radius: 8px; margin-right: 8px; cursor: pointer; }
+        .admin-btn2 { background: #fbbc04; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📷 Điểm danh QR</h1>
-        <div class="subtitle">Quét mã QR của học viên</div>
+        <div class="subtitle">Quét mã QR của học viên - Giáo xứ Ninh Phát</div>
         
         <div class="mode-selector">
             <button class="mode-btn active" onclick="setMode('vao')" id="modeVaoBtn">📥 VÀO LỚP</button>
             <button class="mode-btn" onclick="setMode('ra')" id="modeRaBtn">📤 RA VỀ</button>
         </div>
         
-        <button class="scan-btn" id="scanBtn" onclick="startScanner()">📷 MỞ CAMERA QUÉT QR</button>
-        <button class="scan-btn stop-btn" id="stopBtn" onclick="stopScanner()">⏹️ DỪNG QUÉT</button>
-        
-        <div id="qr-reader"></div>
+        <a href="intent://scan/#Intent;scheme=zxing;end;" class="scan-btn">
+            📷 NHẤN ĐỂ QUÉT QR
+        </a>
         
         <div id="resultBox" class="result-box"></div>
         <div id="studentInfo" class="student-info"></div>
     </div>
     
     <div class="container">
-        <h3>📋 Điểm danh hôm nay</h3>
-        <div id="todayList"><div class="loading">Đang tải...</div></div>
+        <h3>📋 ĐIỂM DANH HÔM NAY</h3>
+        <div id="todayList"><div class="loading">⏳ Đang tải...</div></div>
+    </div>
+    
+    <div class="container">
+        <h3>📊 THỐNG KÊ ĐIỂM DANH HÔM NAY</h3>
+        <div class="chart-container">
+            <canvas id="chartToday"></canvas>
+        </div>
+        <div id="statsText" style="text-align: center; font-size: 14px; color: #666;">Đang tải...</div>
+    </div>
+    
+    <div class="container">
+        <h3>🏆 TOP 5 HỌC VIÊN ĐI HỌC NHIỀU NHẤT</h3>
+        <div class="chart-container">
+            <canvas id="chartTopStudents"></canvas>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="admin-panel">
+            <details>
+                <summary>⚙️ Quản lý dữ liệu (Admin)</summary>
+                <div style="margin-top: 12px;">
+                    <button class="admin-btn" onclick="xoaDuLieuTrung()">🗑️ Xóa dòng trùng</button>
+                    <button class="admin-btn2" onclick="xoaDuLieuCu()">📅 Xóa dữ liệu cũ (30 ngày)</button>
+                </div>
+            </details>
+        </div>
     </div>
     
     <div class="note">
-        📌 Lần đầu dùng: Chrome sẽ hỏi quyền camera → chọn "Cho phép"
+        📌 <strong>Cách dùng:</strong> Nhấn nút quét → Chọn Camera/Google Lens → Quét mã QR<br>
+        🔄 Sau khi quét xong, bạn sẽ tự động quay lại trang này
     </div>
 
     <script>
-        // 🔧 QUAN TRỌNG: Sau khi có Web App URL, thay vào đây
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxi-7ceVzBqClg8QmvvbiQVtEfGZFHqNAhqUBfjypeeEl-iV6SPW346I3miadVHkTVs/exec';
-        
         let currentMode = 'vao';
-        let html5QrCode = null;
+        let chartToday = null;
+        let chartTopStudents = null;
         
         function setMode(mode) {
             currentMode = mode;
@@ -104,37 +136,6 @@
             }
         }
         
-        function startScanner() {
-            if (html5QrCode) { stopScanner(); }
-            
-            document.getElementById('qr-reader').style.display = 'block';
-            document.getElementById('stopBtn').style.display = 'block';
-            document.getElementById('scanBtn').style.display = 'none';
-            
-            html5QrCode = new Html5Qrcode("qr-reader");
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            
-            html5QrCode.start(
-                { facingMode: "environment" },
-                config,
-                (decodedText) => { processAttendance(decodedText); stopScanner(); },
-                (error) => { console.log("Đang quét...", error); }
-            ).catch(err => {
-                alert("❌ Không thể mở camera!\n\n👉 Vào Cài đặt Chrome → Quyền → Camera → Cho phép");
-                stopScanner();
-            });
-        }
-        
-        function stopScanner() {
-            if (html5QrCode) {
-                html5QrCode.stop();
-                html5QrCode = null;
-            }
-            document.getElementById('qr-reader').style.display = 'none';
-            document.getElementById('stopBtn').style.display = 'none';
-            document.getElementById('scanBtn').style.display = 'block';
-        }
-        
         function showResult(message, isSuccess) {
             const resultBox = document.getElementById('resultBox');
             resultBox.style.display = 'block';
@@ -146,57 +147,154 @@
         function showStudentInfo(student, time, isVao) {
             const studentDiv = document.getElementById('studentInfo');
             const action = isVao ? 'VÀO LỚP' : 'RA VỀ';
+            const actionColor = isVao ? '#1e7e34' : '#1a73e8';
             studentDiv.innerHTML = `
-                <div><strong>${escapeHtml(student.hoTen)}</strong></div>
-                <div>📛 Mã: ${escapeHtml(student.ma)}</div>
-                <div>⛪ Tên Thánh: ${escapeHtml(student.tenThanh)}</div>
-                <div>🕐 ${action}: ${escapeHtml(time)}</div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="font-size: 20px;">${isVao ? '📥' : '📤'}</span>
+                    <span class="badge" style="background: ${actionColor}20; color: ${actionColor};">${action}</span>
+                </div>
+                <div class="student-name">${escapeHtml(student.hoTen)}</div>
+                <div class="student-detail">
+                    📛 Mã: ${escapeHtml(student.ma)}<br>
+                    ⛪ Tên Thánh: ${escapeHtml(student.tenThanh)}<br>
+                    🕐 Thời gian: ${escapeHtml(time)}<br>
+                    📞 PH: ${escapeHtml(student.ph)}
+                </div>
             `;
             studentDiv.style.display = 'block';
             setTimeout(() => { studentDiv.style.display = 'none'; }, 8000);
         }
         
-        async function processAttendance(maHV) {
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `action=attendance&maHV=${encodeURIComponent(maHV)}&mode=${currentMode}`
-                });
-                showResult(`✅ Đã điểm danh ${currentMode === 'vao' ? 'VÀO' : 'RA'} cho mã: ${maHV}`, true);
-                loadTodayAttendance();
-            } catch (error) {
-                showResult('❌ Lỗi kết nối: ' + error.message, false);
+        function processAttendance(maHV) {
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.ok) {
+                        showResult('✅ ' + response.msg, true);
+                        if (response.student) {
+                            showStudentInfo(response.student, response.time, currentMode === 'vao');
+                        }
+                        loadTodayAttendance();
+                        loadThongKe();
+                    } else {
+                        showResult('❌ ' + response.msg, false);
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showResult('❌ Lỗi: ' + error.message, false);
+                })
+                .ghiDiemDanh(maHV, currentMode === 'vao' ? 'Vào lớp' : 'Ra về');
+        }
+        
+        function loadTodayAttendance() {
+            const listEl = document.getElementById('todayList');
+            listEl.innerHTML = '<div class="loading">⏳ Đang tải...</div>';
+            google.script.run
+                .withSuccessHandler(function(attendance) {
+                    if (!attendance || attendance.length === 0) {
+                        listEl.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">📭 Chưa có điểm danh nào hôm nay</div>';
+                        return;
+                    }
+                    let html = '';
+                    attendance.forEach(item => {
+                        html += `<div class="attendance-item">
+                            <div><strong>${escapeHtml(item.hoTen)}</strong><br><small>${escapeHtml(item.tenThanh)} - ${escapeHtml(item.maHV)}</small></div>
+                            <div>${item.gioVao ? `<span class="badge badge-vao">📥 ${item.gioVao}</span>` : ''}${item.gioRa ? `<span class="badge badge-ra" style="margin-left:5px;">📤 ${item.gioRa}</span>` : ''}</div>
+                        </div>`;
+                    });
+                    listEl.innerHTML = html;
+                })
+                .withFailureHandler(() => { listEl.innerHTML = '<div style="color: red;">❌ Lỗi tải dữ liệu</div>'; })
+                .getTodayAttendance();
+        }
+        
+        function loadThongKe() {
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    if (chartToday) chartToday.destroy();
+                    const ctx = document.getElementById('chartToday').getContext('2d');
+                    chartToday = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['✅ Đã đến', '❌ Vắng mặt', '⏰ Đi muộn'],
+                            datasets: [{
+                                data: [data.daDen, data.chuaDen, data.diMuon],
+                                backgroundColor: ['#34a853', '#ea4335', '#fbbc04'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+                    });
+                    document.getElementById('statsText').innerHTML = `📊 Đã đến: <strong style="color:#34a853">${data.daDen}</strong> | Vắng: <strong style="color:#ea4335">${data.chuaDen}</strong> | Đi muộn: <strong style="color:#fbbc04">${data.diMuon}</strong>`;
+                })
+                .thongKeHomNay();
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    if (chartTopStudents) chartTopStudents.destroy();
+                    if (data && data.length > 0) {
+                        const ctx = document.getElementById('chartTopStudents').getContext('2d');
+                        chartTopStudents = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: data.map(s => s.hoTen),
+                                datasets: [{
+                                    label: 'Số buổi đi học',
+                                    data: data.map(s => s.soBuoi),
+                                    backgroundColor: '#1a73e8',
+                                    borderRadius: 8
+                                }]
+                            },
+                            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
+                        });
+                    }
+                })
+                .thongKeTopHocVien();
+        }
+        
+        function xoaDuLieuTrung() {
+            if (confirm('Bạn có chắc muốn xóa các dòng điểm danh trùng lặp?')) {
+                google.script.run
+                    .withSuccessHandler(function(response) {
+                        alert(response.message);
+                        loadTodayAttendance();
+                        loadThongKe();
+                    })
+                    .xoaDongTrung();
             }
         }
         
-        async function loadTodayAttendance() {
-            const listEl = document.getElementById('todayList');
-            listEl.innerHTML = '<div class="loading">⏳ Đang tải...</div>';
-            try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getToday`);
-                const data = await response.json();
-                if (!data || data.length === 0) {
-                    listEl.innerHTML = '<div style="text-align: center; color: #888;">📭 Chưa có điểm danh nào hôm nay</div>';
-                    return;
-                }
-                let html = '';
-                data.forEach(item => {
-                    html += `<div class="attendance-item">
-                        <div><strong>${escapeHtml(item.hoTen)}</strong><br><small>${escapeHtml(item.maHV)}</small></div>
-                        <div>${item.gioVao ? `<span class="badge badge-vao">📥 ${item.gioVao}</span>` : ''}${item.gioRa ? `<span class="badge badge-ra">📤 ${item.gioRa}</span>` : ''}</div>
-                    </div>`;
-                });
-                listEl.innerHTML = html;
-            } catch(e) {
-                listEl.innerHTML = '<div style="color: red;">❌ Lỗi tải dữ liệu</div>';
+        function xoaDuLieuCu() {
+            if (confirm('Xóa dữ liệu điểm danh cũ hơn 30 ngày?')) {
+                google.script.run
+                    .withSuccessHandler(function(response) {
+                        alert(response.message);
+                        loadTodayAttendance();
+                        loadThongKe();
+                    })
+                    .xoaDuLieuCu();
+            }
+        }
+        
+        function handleScannedResult() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let scanned = urlParams.get('qr');
+            if (!scanned) scanned = urlParams.get('SCAN_RESULT');
+            
+            if (scanned && scanned.trim() !== '') {
+                let firstLine = scanned.split('\n')[0].trim();
+                processAttendance(firstLine);
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
             }
         }
         
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'; }); }
         
-        window.onload = function() { loadTodayAttendance(); };
+        window.onload = function() {
+            loadTodayAttendance();
+            handleScannedResult();
+            loadThongKe();
+        };
     </script>
 </body>
 </html>
