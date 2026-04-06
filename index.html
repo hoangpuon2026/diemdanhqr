@@ -43,7 +43,7 @@
     <script>
         let currentMode = 'vao';
         let chartToday, chartTopStudents;
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxi-7ceVzBqClg8QmvvbiQVtEfGZFHqNAhqUBfjypeeEl-iV6SPW346I3miadVHkTVs/exec'; // 👈 THAY URL CỦA BẠN
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwe3_fRJiiCZD8ghiMZ51yIA1pZTEFOfg9vBYKw2L-p6z7Ku7MW4u4hzt6kbHeMf4HF/exec'; // 👈 THAY URL CỦA BẠN
         
         function setMode(mode) { currentMode = mode; document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(mode === 'vao' ? 'modeVaoBtn' : 'modeRaBtn')?.classList.add('active'); }
         function showResult(msg, isSuccess) { const box = document.getElementById('resultBox'); box.innerHTML = msg; box.className = 'result-box ' + (isSuccess ? 'success' : 'error'); box.style.display = 'block'; setTimeout(() => box.style.display = 'none', 5000); }
