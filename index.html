@@ -30,10 +30,12 @@
         }
         h3 { font-size: 17px; color: #333; margin-bottom: 14px; }
 
+        /* URL box */
         .url-box {
-            background: #fff8e1; border: 1px solid #ffcc02;
+            background: #fff8e1; border: 2px solid #ffcc02;
             border-radius: 12px; padding: 14px; margin-bottom: 16px;
         }
+        .url-box.saved { border-color: #34a853; background: #f0fff4; }
         .url-box label { font-size: 13px; font-weight: bold; color: #555; display: block; margin-bottom: 6px; }
         .url-box input {
             width: 100%; padding: 10px 12px; border: 1px solid #ddd;
@@ -43,10 +45,11 @@
         .url-save-btn {
             margin-top: 8px; padding: 10px 16px;
             background: #1a73e8; color: white; border: none;
-            border-radius: 8px; font-size: 13px; cursor: pointer; width: 100%;
-            font-weight: bold;
+            border-radius: 8px; font-size: 14px; font-weight: bold;
+            cursor: pointer; width: 100%;
         }
 
+        /* Mode */
         .mode-selector {
             display: flex; gap: 10px; margin-bottom: 16px;
             background: #f0f2f5; padding: 5px; border-radius: 40px;
@@ -54,11 +57,12 @@
         .mode-btn {
             flex: 1; padding: 12px; text-align: center;
             border-radius: 32px; font-weight: bold; cursor: pointer;
-            border: none; background: transparent; font-size: 15px; transition: all 0.2s;
+            border: none; background: transparent; font-size: 15px;
         }
         .mode-btn.active { background: #1a73e8; color: white; }
         .mode-btn:not(.active) { color: #5f6368; }
 
+        /* Scan button */
         .scan-btn {
             display: block; width: 100%;
             background: linear-gradient(135deg, #1a73e8, #0d5bbd);
@@ -66,8 +70,7 @@
             font-size: 19px; font-weight: bold; border-radius: 48px;
             border: none; cursor: pointer; margin: 12px 0;
         }
-        .scan-btn:active { opacity: 0.9; transform: scale(0.98); }
-
+        .scan-btn:active { opacity: 0.9; }
         .stop-btn {
             display: none; width: 100%;
             background: #ea4335; color: white; text-align: center;
@@ -75,22 +78,35 @@
             border-radius: 48px; border: none; cursor: pointer; margin: 8px 0;
         }
 
-        #reader-wrap {
-            display: none; margin: 12px 0;
-            border-radius: 16px; overflow: hidden;
-            border: 3px solid #1a73e8;
-            background: #000;
+        /* --- READER: để html5-qrcode tự thêm video vào đây --- */
+        #reader {
+            display: none;
+            width: 100%;
+            margin: 12px 0;
+            /* KHÔNG đặt overflow:hidden hay border-radius ở đây */
         }
-        #reader { width: 100%; }
+        /* Đảm bảo video bên trong hiển thị đúng kích thước */
+        #reader video {
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            border-radius: 16px;
+            display: block;
+        }
+        #reader img { display: none; } /* Ẩn icon mặc định của thư viện */
+        /* Ô ngắm vuông ở giữa */
+        #reader > div { border-radius: 12px; }
 
+        /* Result */
         .result-box {
             border-radius: 14px; padding: 14px; margin: 12px 0;
             display: none; font-size: 15px; line-height: 1.5;
         }
         .result-box.success { background: #e6f4ea; border-left: 4px solid #34a853; color: #1a7a33; }
         .result-box.error   { background: #fce8e6; border-left: 4px solid #ea4335; color: #c0392b; }
-        .result-box.info    { background: #e8f0fe; border-left: 4px solid #1a73e8; color: #1a73e8; }
+        .result-box.info    { background: #e8f0fe; border-left: 4px solid #1a73e8; color: #1558b0; }
 
+        /* Student card */
         .student-info {
             background: #f8f9fa; border-radius: 14px;
             padding: 16px; margin: 12px 0; display: none;
@@ -100,12 +116,13 @@
         .student-detail { font-size: 14px; color: #444; line-height: 2; }
         .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
 
+        /* Attendance list */
         .attendance-item {
             background: #f8f9fa; border-radius: 12px; padding: 12px; margin: 8px 0;
             display: flex; justify-content: space-between; align-items: center;
         }
         .att-name { font-weight: bold; font-size: 15px; }
-        .att-sub { color: #888; font-size: 12px; margin-top: 2px; }
+        .att-sub  { color: #888; font-size: 12px; margin-top: 2px; }
         .bv { background: #e6f4ea; color: #1e7e34; padding: 4px 9px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         .br { background: #e8f0fe; color: #1a73e8; padding: 4px 9px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-left: 4px; }
 
@@ -130,8 +147,8 @@
     <div class="subtitle">Giáo xứ Ninh Phát</div>
 
     <div class="url-box" id="urlBox">
-        <label>🔗 Dán URL Google Apps Script của bạn vào đây:</label>
-        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/..." />
+        <label>🔗 Dán URL Google Apps Script vào đây (chỉ cần làm 1 lần):</label>
+        <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/..." autocomplete="off" />
         <button class="url-save-btn" onclick="saveUrl()">💾 Lưu URL</button>
     </div>
 
@@ -141,9 +158,10 @@
     </div>
 
     <button class="scan-btn" id="scanBtn" onclick="startScanner()">📷 NHẤN ĐỂ QUÉT QR</button>
-    <button class="stop-btn" id="stopBtn" onclick="stopScanner()">⏹ DỪNG CAMERA</button>
+    <button class="stop-btn"  id="stopBtn" onclick="stopScanner()">⏹ DỪNG CAMERA</button>
 
-    <div id="reader-wrap"><div id="reader"></div></div>
+    <!-- Thư viện html5-qrcode sẽ inject video vào đây -->
+    <div id="reader"></div>
 
     <div id="resultBox" class="result-box"></div>
     <div id="studentInfo" class="student-info"></div>
@@ -166,21 +184,21 @@
 </div>
 
 <div class="note">
-    📌 Nhấn <strong>QUÉT QR</strong> → Trình duyệt hỏi quyền camera → Chọn <strong>Cho phép</strong><br>
-    🔒 Yêu cầu truy cập qua HTTPS (GitHub Pages ✅ · file:// ❌)
+    📌 Nhấn <strong>QUÉT QR</strong> → Cho phép camera → Đưa mã QR vào khung vuông<br>
+    🔒 Chỉ hoạt động trên HTTPS — GitHub Pages ✅
 </div>
 
 <script>
 // =========================================================
-// CẤU HÌNH URL
+// URL
 // =========================================================
-const URL_KEY = 'gasScriptUrl_v2';
+const URL_KEY = 'gasUrl_v3';
 let SCRIPT_URL = localStorage.getItem(URL_KEY) || '';
 
 window.addEventListener('DOMContentLoaded', () => {
     if (SCRIPT_URL) {
         document.getElementById('scriptUrl').value = SCRIPT_URL;
-        markUrlOk();
+        document.getElementById('urlBox').classList.add('saved');
         loadAll();
     }
 });
@@ -188,22 +206,18 @@ window.addEventListener('DOMContentLoaded', () => {
 function saveUrl() {
     const val = document.getElementById('scriptUrl').value.trim();
     if (!val.startsWith('https://script.google.com/')) {
-        alert('❌ URL không đúng!\nPhải bắt đầu bằng:\nhttps://script.google.com/macros/s/...');
+        alert('URL không đúng!\nPhải bắt đầu bằng:\nhttps://script.google.com/macros/s/...');
         return;
     }
     SCRIPT_URL = val;
     localStorage.setItem(URL_KEY, val);
-    markUrlOk();
-    showResult('✅ Đã lưu URL thành công!', 'success');
+    document.getElementById('urlBox').classList.add('saved');
+    showResult('✅ Đã lưu URL!', 'success');
     loadAll();
 }
 
-function markUrlOk() {
-    document.getElementById('urlBox').style.borderColor = '#34a853';
-}
-
 // =========================================================
-// CHẾ ĐỘ VÀO/RA
+// MODE
 // =========================================================
 let currentMode = 'vao';
 function setMode(mode) {
@@ -213,101 +227,93 @@ function setMode(mode) {
 }
 
 // =========================================================
-// CAMERA QR — mở trực tiếp bằng facingMode, không qua getCameras()
+// CAMERA — KHÔNG dùng wrapper, inject thẳng vào #reader
 // =========================================================
-let scanner = null;
-let scanning = false;
-let lastCode = '';
-let lastTime = 0;
+let scanner   = null;
+let scanning  = false;
+let lastCode  = '';
+let lastTime  = 0;
 
 function startScanner() {
     if (scanning) return;
 
-    // Hiện camera wrap, ẩn nút Quét
-    document.getElementById('reader-wrap').style.display = 'block';
+    const readerEl = document.getElementById('reader');
+
+    // Xoá nội dung cũ nếu có
+    readerEl.innerHTML = '';
+    readerEl.style.display = 'block';
+
     document.getElementById('scanBtn').style.display = 'none';
     document.getElementById('stopBtn').style.display = 'block';
     document.getElementById('resultBox').style.display = 'none';
 
+    // Tạo scanner mới
     scanner = new Html5Qrcode('reader');
+
+    const qrboxSize = Math.min(250, Math.floor(readerEl.offsetWidth * 0.75) || 250);
 
     const config = {
         fps: 10,
-        qrbox: { width: 240, height: 240 },
-        aspectRatio: 1.0,
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+        qrbox: { width: qrboxSize, height: qrboxSize },
+        aspectRatio: 1.333,
+        showTorchButtonIfSupported: true
     };
 
-    // Thử camera sau (environment) trước, nếu không có thì dùng camera bất kỳ
+    // Thử camera sau (environment) — camera sau điện thoại
     scanner.start(
         { facingMode: { ideal: 'environment' } },
         config,
         onQrSuccess,
-        onQrError
+        () => { /* bỏ qua lỗi đọc frame */ }
     ).then(() => {
         scanning = true;
-    }).catch(err => {
-        // Nếu "environment" không được, thử camera bất kỳ
+    }).catch(() => {
+        // Fallback: thử bất kỳ camera nào
         scanner.start(
             { facingMode: 'user' },
             config,
             onQrSuccess,
-            onQrError
+            () => {}
         ).then(() => {
             scanning = true;
-        }).catch(err2 => {
-            handleCameraError(err2);
+        }).catch(err => {
+            handleCameraError(err);
         });
     });
 }
 
-function onQrSuccess(decodedText) {
+function onQrSuccess(text) {
     const now = Date.now();
-    // Chống quét trùng trong 3 giây
-    if (decodedText === lastCode && now - lastTime < 3000) return;
-    lastCode = decodedText;
+    if (text === lastCode && now - lastTime < 3000) return; // chống quét trùng
+    lastCode = text;
     lastTime = now;
-
-    const maHV = decodedText.split('\n')[0].trim().toUpperCase();
-    if (!maHV) return;
-
-    // Rung nhẹ khi quét được (nếu thiết bị hỗ trợ)
     if (navigator.vibrate) navigator.vibrate(100);
-
-    processAttendance(maHV);
-}
-
-function onQrError(err) {
-    // Lỗi đọc frame là bình thường, bỏ qua
+    const maHV = text.split('\n')[0].trim().toUpperCase();
+    if (maHV) processAttendance(maHV);
 }
 
 function handleCameraError(err) {
-    const e = err ? err.toString() : '';
+    const e = String(err || '');
     let msg = '❌ Không mở được camera.';
-
     if (e.includes('Permission') || e.includes('NotAllowed') || e.includes('denied')) {
         msg = '❌ Bị từ chối quyền camera.<br>'
             + '📱 iPhone: Cài đặt → Safari → Camera → Cho phép<br>'
             + '🤖 Android: Cài đặt → Chrome → Quyền → Camera → Cho phép';
     } else if (e.includes('NotFound') || e.includes('DevicesNotFound')) {
-        msg = '❌ Không tìm thấy camera trên thiết bị này.';
-    } else if (e.includes('NotSupported') || e.includes('https')) {
-        msg = '❌ Trình duyệt không cho phép camera.<br>Hãy mở trang qua HTTPS (GitHub Pages), không dùng file://.';
-    } else if (e) {
-        msg = '❌ Lỗi camera: ' + e;
+        msg = '❌ Không tìm thấy camera trên thiết bị.';
+    } else if (e.includes('https') || e.includes('secure')) {
+        msg = '❌ Cần HTTPS để mở camera. Mở trang qua GitHub Pages.';
     }
-
     showResult(msg, 'error');
     stopScanner();
 }
 
 function stopScanner() {
     scanning = false;
-    document.getElementById('reader-wrap').style.display = 'none';
+    document.getElementById('reader').style.display = 'none';
     document.getElementById('scanBtn').style.display = 'block';
     document.getElementById('stopBtn').style.display = 'none';
     lastCode = '';
-
     if (scanner) {
         scanner.stop().catch(() => {});
         scanner.clear();
@@ -316,13 +322,13 @@ function stopScanner() {
 }
 
 // =========================================================
-// GỬI ĐIỂM DANH
+// ĐIỂM DANH
 // =========================================================
 async function processAttendance(maHV) {
     showResult('<span class="spinner"></span> Đang điểm danh <strong>' + escapeHtml(maHV) + '</strong>...', 'info');
 
     if (!SCRIPT_URL) {
-        showResult('⚠️ Chưa có URL Apps Script. Vui lòng nhập URL ở phía trên rồi nhấn Lưu.', 'error');
+        showResult('⚠️ Chưa nhập URL Apps Script. Vui lòng dán URL và nhấn Lưu.', 'error');
         return;
     }
 
@@ -339,51 +345,46 @@ async function processAttendance(maHV) {
         if (data.ok) {
             showResult(data.message, 'success');
             if (data.student) showStudentInfo(data.student, data.time, currentMode === 'vao');
-            // Dừng camera sau 1.5s
             setTimeout(stopScanner, 1500);
             loadTodayAttendance();
         } else {
-            showResult(data.message || '❌ Có lỗi xảy ra', 'error');
+            showResult(data.message || '❌ Lỗi không xác định', 'error');
         }
-    } catch (err) {
-        showResult('❌ Lỗi kết nối server.<br><small>Kiểm tra URL và thử lại. (' + err + ')</small>', 'error');
+    } catch (e) {
+        showResult('❌ Lỗi kết nối server. Kiểm tra URL và thử lại.<br><small>' + e + '</small>', 'error');
     }
 }
 
 // =========================================================
-// HIỂN THỊ KẾT QUẢ
+// HIỂN THỊ
 // =========================================================
-let resultTimer = null;
+let rTimer = null;
 function showResult(html, type) {
-    const box = document.getElementById('resultBox');
-    box.innerHTML = html;
-    box.className = 'result-box ' + type;
-    box.style.display = 'block';
-    clearTimeout(resultTimer);
-    if (type !== 'info') {
-        resultTimer = setTimeout(() => { box.style.display = 'none'; }, 7000);
-    }
+    const b = document.getElementById('resultBox');
+    b.innerHTML = html;
+    b.className = 'result-box ' + type;
+    b.style.display = 'block';
+    clearTimeout(rTimer);
+    if (type !== 'info') rTimer = setTimeout(() => { b.style.display = 'none'; }, 7000);
 }
 
-function showStudentInfo(student, time, isVao) {
-    const div = document.getElementById('studentInfo');
-    const color = isVao ? '#1e7e34' : '#1a73e8';
-    const label = isVao ? '📥 VÀO LỚP' : '📤 RA VỀ';
-    div.innerHTML = `
+function showStudentInfo(s, time, isVao) {
+    const d = document.getElementById('studentInfo');
+    const c = isVao ? '#1e7e34' : '#1a73e8';
+    d.innerHTML = `
         <div class="student-top">
-            <span style="font-size:24px;">${isVao ? '📥' : '📤'}</span>
-            <span class="badge" style="background:${color}18;color:${color};">${label}</span>
+            <span style="font-size:26px;">${isVao ? '📥' : '📤'}</span>
+            <span class="badge" style="background:${c}18;color:${c};">${isVao ? 'VÀO LỚP' : 'RA VỀ'}</span>
         </div>
-        <div class="student-name">${escapeHtml(student.hoTen)}</div>
+        <div class="student-name">${escapeHtml(s.hoTen)}</div>
         <div class="student-detail">
-            📛 Mã HV: <strong>${escapeHtml(student.ma)}</strong><br>
-            ⛪ Tên Thánh: ${escapeHtml(student.tenThanh)}<br>
+            📛 Mã HV: <strong>${escapeHtml(s.ma)}</strong><br>
+            ⛪ Tên Thánh: ${escapeHtml(s.tenThanh)}<br>
             🕐 Thời gian: <strong>${escapeHtml(time)}</strong><br>
-            📞 Phụ huynh: ${escapeHtml(student.ph)}
-        </div>
-    `;
-    div.style.display = 'block';
-    setTimeout(() => { div.style.display = 'none'; }, 10000);
+            📞 Phụ huynh: ${escapeHtml(s.ph)}
+        </div>`;
+    d.style.display = 'block';
+    setTimeout(() => { d.style.display = 'none'; }, 10000);
 }
 
 // =========================================================
@@ -394,9 +395,9 @@ async function loadTodayAttendance() {
     const el = document.getElementById('todayList');
     el.innerHTML = '<div class="loading">⏳ Đang tải...</div>';
     try {
-        const res = await fetch(SCRIPT_URL + '?action=getToday');
-        const data = await res.json();
-        if (!data || data.length === 0) {
+        const r = await fetch(SCRIPT_URL + '?action=getToday');
+        const data = await r.json();
+        if (!data || !data.length) {
             el.innerHTML = '<div class="loading">📭 Chưa có điểm danh nào hôm nay</div>';
             return;
         }
@@ -410,26 +411,24 @@ async function loadTodayAttendance() {
                     ${item.gioVao ? `<span class="bv">📥 ${item.gioVao}</span>` : ''}
                     ${item.gioRa  ? `<span class="br">📤 ${item.gioRa}</span>`  : ''}
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
     } catch (e) {
         el.innerHTML = '<div style="color:red;text-align:center;padding:16px;">❌ Lỗi tải dữ liệu</div>';
     }
 }
 
 // =========================================================
-// BIỂU ĐỒ THỐNG KÊ
+// BIỂU ĐỒ
 // =========================================================
-let chartToday, chartTop;
+let cToday, cTop;
 
 async function loadThongKe() {
     if (!SCRIPT_URL) return;
-
     try {
         const r = await fetch(SCRIPT_URL + '?action=thongKeHomNay');
         const d = await r.json();
-        if (chartToday) chartToday.destroy();
-        chartToday = new Chart(document.getElementById('chartToday'), {
+        if (cToday) cToday.destroy();
+        cToday = new Chart(document.getElementById('chartToday'), {
             type: 'doughnut',
             data: {
                 labels: ['Đã đến', 'Vắng mặt', 'Đi muộn'],
@@ -444,9 +443,9 @@ async function loadThongKe() {
     try {
         const r2 = await fetch(SCRIPT_URL + '?action=thongKeTopHocVien');
         const d2 = await r2.json();
-        if (!d2 || d2.length === 0) return;
-        if (chartTop) chartTop.destroy();
-        chartTop = new Chart(document.getElementById('chartTop'), {
+        if (!d2 || !d2.length) return;
+        if (cTop) cTop.destroy();
+        cTop = new Chart(document.getElementById('chartTop'), {
             type: 'bar',
             data: {
                 labels: d2.map(s => s.hoTen),
@@ -457,20 +456,15 @@ async function loadThongKe() {
     } catch (e) {}
 }
 
-function loadAll() {
-    loadTodayAttendance();
-    loadThongKe();
-}
+function loadAll() { loadTodayAttendance(); loadThongKe(); }
 
-// =========================================================
-// TIỆN ÍCH
-// =========================================================
 function escapeHtml(str) {
     if (!str) return '';
     return str.toString().replace(/[&<>"']/g, c =>
-        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
-    );
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
+
+window.onload = loadAll;
 </script>
 </body>
 </html>
