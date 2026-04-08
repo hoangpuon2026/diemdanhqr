@@ -1,93 +1,438 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Điểm danh QR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Điểm danh QR - Giáo xứ Ninh Phát</title>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; background: #f0f2f5; }
-        .container { background: white; border-radius: 20px; padding: 20px; margin-bottom: 16px; }
-        h1 { font-size: 24px; color: #1a73e8; }
-        .mode-selector { display: flex; gap: 12px; margin-bottom: 20px; }
-        .mode-btn { flex: 1; padding: 12px; border-radius: 32px; border: none; cursor: pointer; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 16px;
+        }
+        h1 { font-size: 22px; color: #1a73e8; margin-bottom: 4px; }
+        .subtitle {
+            color: #666; font-size: 13px; margin-bottom: 20px;
+            border-left: 3px solid #1a73e8; padding-left: 10px;
+        }
+        h3 { font-size: 17px; color: #333; margin-bottom: 14px; }
+
+        /* URL config */
+        .url-box {
+            background: #fff8e1; border: 1px solid #ffcc02;
+            border-radius: 12px; padding: 14px; margin-bottom: 16px;
+        }
+        .url-box label { font-size: 13px; font-weight: bold; color: #555; display: block; margin-bottom: 6px; }
+        .url-box input {
+            width: 100%; padding: 10px 12px; border: 1px solid #ddd;
+            border-radius: 8px; font-size: 13px; color: #333;
+        }
+        .url-box input:focus { outline: none; border-color: #1a73e8; }
+        .url-save-btn {
+            margin-top: 8px; padding: 8px 16px;
+            background: #1a73e8; color: white; border: none;
+            border-radius: 8px; font-size: 13px; cursor: pointer; width: 100%;
+        }
+
+        /* Mode selector */
+        .mode-selector {
+            display: flex; gap: 10px; margin-bottom: 16px;
+            background: #f0f2f5; padding: 5px; border-radius: 40px;
+        }
+        .mode-btn {
+            flex: 1; padding: 12px; text-align: center;
+            border-radius: 32px; font-weight: bold; cursor: pointer;
+            border: none; background: transparent; font-size: 15px; transition: all 0.2s;
+        }
         .mode-btn.active { background: #1a73e8; color: white; }
-        .scan-btn { display: block; background: #1a73e8; color: white; text-align: center; padding: 18px; border-radius: 48px; text-decoration: none; margin: 16px 0; }
-        .result-box, .student-info { display: none; padding: 16px; margin: 16px 0; border-radius: 16px; }
-        .result-box.success { background: #e6f4ea; }
-        .result-box.error { background: #fce8e6; }
-        .attendance-item { background: #f8f9fa; padding: 12px; margin: 8px 0; border-radius: 12px; display: flex; justify-content: space-between; }
-        .badge-vao { background: #e6f4ea; color: #1e7e34; padding: 4px 8px; border-radius: 20px; }
-        .badge-ra { background: #e8f0fe; color: #1a73e8; padding: 4px 8px; border-radius: 20px; }
-        .loading { text-align: center; padding: 20px; color: #888; }
-        canvas { max-width: 100%; max-height: 250px; margin: 16px 0; }
-        .note { font-size: 11px; color: #888; text-align: center; margin-top: 20px; }
+        .mode-btn:not(.active) { color: #5f6368; }
+
+        /* Scan button */
+        .scan-btn {
+            display: block; width: 100%;
+            background: linear-gradient(135deg, #1a73e8, #0d5bbd);
+            color: white; text-align: center; padding: 18px;
+            font-size: 18px; font-weight: bold; border-radius: 48px;
+            border: none; cursor: pointer; margin: 12px 0; transition: transform 0.1s;
+        }
+        .scan-btn:active { transform: scale(0.98); }
+        .stop-btn {
+            display: none; width: 100%;
+            background: #ea4335; color: white;
+            text-align: center; padding: 14px;
+            font-size: 15px; font-weight: bold;
+            border-radius: 48px; border: none; cursor: pointer; margin: 8px 0;
+        }
+
+        /* QR Reader */
+        #reader {
+            display: none; border-radius: 16px;
+            overflow: hidden; margin: 12px 0;
+            border: 2px solid #1a73e8;
+        }
+        #reader video { border-radius: 14px; }
+
+        /* Result boxes */
+        .result-box {
+            border-radius: 14px; padding: 14px;
+            margin: 12px 0; display: none; font-size: 15px;
+        }
+        .result-box.success { background: #e6f4ea; border-left: 4px solid #34a853; color: #1a7a33; }
+        .result-box.error   { background: #fce8e6; border-left: 4px solid #ea4335; color: #c0392b; }
+        .result-box.loading { background: #e8f0fe; border-left: 4px solid #1a73e8; color: #1a73e8; }
+
+        .student-info {
+            background: #f8f9fa; border-radius: 14px;
+            padding: 16px; margin: 12px 0; display: none;
+        }
+        .student-top {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 10px;
+        }
+        .student-name { font-size: 18px; font-weight: bold; color: #1a1a1a; margin-bottom: 8px; }
+        .student-detail { font-size: 14px; color: #444; line-height: 2; }
+        .badge {
+            display: inline-block; padding: 5px 12px;
+            border-radius: 20px; font-size: 12px; font-weight: bold;
+        }
+
+        /* Today list */
+        .attendance-item {
+            background: #f8f9fa; border-radius: 12px;
+            padding: 12px; margin: 8px 0;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .attendance-item .name { font-weight: bold; font-size: 15px; }
+        .attendance-item .sub { color: #888; font-size: 12px; margin-top: 2px; }
+        .badge-vao { background: #e6f4ea; color: #1e7e34; padding: 4px 9px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .badge-ra  { background: #e8f0fe; color: #1a73e8; padding: 4px 9px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-left: 4px; }
+
+        .loading { text-align: center; padding: 20px; color: #999; font-size: 14px; }
+        canvas { max-width: 100%; max-height: 240px; margin: 12px 0; }
+        .stats-text { text-align: center; font-size: 14px; color: #555; margin-top: 8px; }
+
+        .note {
+            font-size: 12px; color: #888; text-align: center;
+            margin-top: 8px; line-height: 2;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner {
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid currentColor; border-top-color: transparent;
+            border-radius: 50%; animation: spin 0.7s linear infinite;
+            vertical-align: middle; margin-right: 6px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📷 Điểm danh QR</h1>
-        <div class="mode-selector">
-            <button class="mode-btn active" onclick="setMode('vao')">📥 VÀO LỚP</button>
-            <button class="mode-btn" onclick="setMode('ra')">📤 RA VỀ</button>
-        </div>
-        <a href="intent://scan/#Intent;scheme=zxing;end;" class="scan-btn">📷 NHẤN ĐỂ QUÉT QR</a>
-        <div id="resultBox" class="result-box"></div>
-        <div id="studentInfo" class="student-info"></div>
+
+<div class="container">
+    <h1>📷 Điểm danh QR</h1>
+    <div class="subtitle">Giáo xứ Ninh Phát</div>
+
+    <!-- Cấu hình URL Apps Script -->
+    <div class="url-box" id="urlBox">
+        <label>🔗 Google Apps Script URL (dán URL deploy của bạn vào đây):</label>
+        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/..." />
+        <button class="url-save-btn" onclick="saveUrl()">💾 Lưu và sử dụng</button>
     </div>
-    <div class="container"><h3>📋 Điểm danh hôm nay</h3><div id="todayList"><div class="loading">Đang tải...</div></div></div>
-    <div class="container"><h3>📊 Thống kê hôm nay</h3><canvas id="chartToday"></canvas><div id="statsText" style="text-align:center"></div></div>
-    <div class="container"><h3>🏆 Top 5 học viên</h3><canvas id="chartTopStudents"></canvas></div>
-    <div class="note">Nhấn nút quét → Chọn Camera → Quét mã QR</div>
-    <script>
-        let currentMode = 'vao';
-        let chartToday, chartTopStudents;
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwiXysc5pSeOQESe6HcZ_SkDX0u1uH0PqQqHqKc3rDkU3A3bODlv_jU79xNRKOY-Lwt/exec'; // 👈 THAY URL CỦA BẠN
-        
-        function setMode(mode) { currentMode = mode; document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(mode === 'vao' ? 'modeVaoBtn' : 'modeRaBtn')?.classList.add('active'); }
-        function showResult(msg, isSuccess) { const box = document.getElementById('resultBox'); box.innerHTML = msg; box.className = 'result-box ' + (isSuccess ? 'success' : 'error'); box.style.display = 'block'; setTimeout(() => box.style.display = 'none', 5000); }
-        
-        async function processAttendance(maHV) {
-            try {
-                const res = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `action=attendance&maHV=${encodeURIComponent(maHV)}&mode=${currentMode}` });
-                showResult(`✅ Đã điểm danh ${currentMode === 'vao' ? 'VÀO' : 'RA'} cho mã: ${maHV}`, true);
-                loadTodayAttendance(); loadThongKe();
-            } catch(e) { showResult('❌ Lỗi: ' + e.message, false); }
+
+    <div class="mode-selector">
+        <button class="mode-btn active" onclick="setMode('vao')" id="modeVaoBtn">📥 VÀO LỚP</button>
+        <button class="mode-btn" onclick="setMode('ra')" id="modeRaBtn">📤 RA VỀ</button>
+    </div>
+
+    <button class="scan-btn" id="scanBtn" onclick="startScanner()">📷 NHẤN ĐỂ QUÉT QR</button>
+    <button class="stop-btn" id="stopBtn" onclick="stopScanner()">⏹ DỪNG CAMERA</button>
+
+    <div id="reader"></div>
+
+    <div id="resultBox" class="result-box"></div>
+    <div id="studentInfo" class="student-info"></div>
+</div>
+
+<div class="container">
+    <h3>📋 Điểm danh hôm nay</h3>
+    <div id="todayList"><div class="loading">⏳ Đang tải...</div></div>
+</div>
+
+<div class="container">
+    <h3>📊 Thống kê hôm nay</h3>
+    <canvas id="chartToday"></canvas>
+    <div class="stats-text" id="statsText"></div>
+</div>
+
+<div class="container">
+    <h3>🏆 Top 5 học viên chuyên cần</h3>
+    <canvas id="chartTop"></canvas>
+</div>
+
+<div class="note">
+    📌 Nhấn <strong>QUÉT QR</strong> → Cho phép camera → Đưa mã QR vào khung<br>
+    🔒 Phải truy cập qua <strong>HTTPS</strong> để camera hoạt động (GitHub Pages ✅)
+</div>
+
+<script>
+    // ========== CẤU HÌNH URL ==========
+    const URL_KEY = 'gasScriptUrl';
+    let SCRIPT_URL = localStorage.getItem(URL_KEY) || '';
+
+    window.addEventListener('DOMContentLoaded', () => {
+        if (SCRIPT_URL) {
+            document.getElementById('scriptUrl').value = SCRIPT_URL;
+            document.getElementById('urlBox').style.border = '1px solid #34a853';
+            loadAll();
         }
-        
-        async function loadTodayAttendance() {
-            const listEl = document.getElementById('todayList'); listEl.innerHTML = '<div class="loading">Đang tải...</div>';
-            try {
-                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getToday`); const data = await res.json();
-                if (!data || data.length === 0) { listEl.innerHTML = '<div style="text-align:center;color:#888">📭 Chưa có điểm danh nào</div>'; return; }
-                let html = ''; data.forEach(item => { html += `<div class="attendance-item"><div><strong>${item.hoTen}</strong><br><small>${item.maHV}</small></div><div>${item.gioVao ? `<span class="badge-vao">📥 ${item.gioVao}</span>` : ''}${item.gioRa ? `<span class="badge-ra">📤 ${item.gioRa}</span>` : ''}</div></div>`; });
-                listEl.innerHTML = html;
-            } catch(e) { listEl.innerHTML = '<div style="color:red">❌ Lỗi tải</div>'; }
+    });
+
+    function saveUrl() {
+        const val = document.getElementById('scriptUrl').value.trim();
+        if (!val.startsWith('https://script.google.com/')) {
+            alert('❌ URL không hợp lệ! Phải bắt đầu bằng https://script.google.com/');
+            return;
         }
-        
-        async function loadThongKe() {
-            try {
-                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=thongKeHomNay`); const data = await res.json();
-                if (chartToday) chartToday.destroy();
-                const ctx = document.getElementById('chartToday').getContext('2d');
-                chartToday = new Chart(ctx, { type: 'doughnut', data: { labels: ['Đã đến', 'Vắng mặt', 'Đi muộn'], datasets: [{ data: [data.daDen, data.chuaDen, data.diMuon], backgroundColor: ['#34a853', '#ea4335', '#fbbc04'] }] }, options: { responsive: true } });
-                document.getElementById('statsText').innerHTML = `✅ Đã đến: ${data.daDen} | ❌ Vắng: ${data.chuaDen} | ⏰ Đi muộn: ${data.diMuon}`;
-            } catch(e) { console.log(e); }
-            try {
-                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=thongKeTopHocVien`); const data = await res.json();
-                if (chartTopStudents) chartTopStudents.destroy();
-                if (data && data.length) { const ctx = document.getElementById('chartTopStudents').getContext('2d'); chartTopStudents = new Chart(ctx, { type: 'bar', data: { labels: data.map(s => s.hoTen), datasets: [{ label: 'Số buổi', data: data.map(s => s.soBuoi), backgroundColor: '#1a73e8' }] }, options: { responsive: true } }); }
-            } catch(e) { console.log(e); }
+        SCRIPT_URL = val;
+        localStorage.setItem(URL_KEY, val);
+        document.getElementById('urlBox').style.border = '1px solid #34a853';
+        showResult('✅ Đã lưu URL. Đang tải dữ liệu...', 'success');
+        loadAll();
+    }
+
+    function checkUrl() {
+        if (!SCRIPT_URL) {
+            showResult('⚠️ Vui lòng dán URL Google Apps Script vào ô phía trên rồi nhấn Lưu.', 'error');
+            return false;
         }
-        
-        function handleScannedResult() {
-            const urlParams = new URLSearchParams(window.location.search);
-            let scanned = urlParams.get('qr') || urlParams.get('SCAN_RESULT');
-            if (scanned && scanned.trim()) { processAttendance(scanned.split('\n')[0].trim()); window.history.replaceState({}, document.title, window.location.pathname); }
+        return true;
+    }
+
+    // ========== CHẾ ĐỘ VÀO/RA ==========
+    let currentMode = 'vao';
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('modeVaoBtn').classList.toggle('active', mode === 'vao');
+        document.getElementById('modeRaBtn').classList.toggle('active', mode === 'ra');
+    }
+
+    // ========== CAMERA QR ==========
+    let html5QrCode = null;
+    let scanning = false;
+    let lastCode = '';
+    let lastTime = 0;
+
+    function startScanner() {
+        if (scanning) return;
+        if (!checkUrl()) return;
+
+        document.getElementById('reader').style.display = 'block';
+        document.getElementById('scanBtn').style.display = 'none';
+        document.getElementById('stopBtn').style.display = 'block';
+
+        html5QrCode = new Html5Qrcode('reader');
+
+        Html5Qrcode.getCameras()
+            .then(devices => {
+                if (!devices || devices.length === 0) {
+                    showResult('❌ Không tìm thấy camera. Kiểm tra lại thiết bị.', 'error');
+                    stopScanner();
+                    return;
+                }
+
+                // Ưu tiên camera sau (back/environment)
+                let cameraId = devices[devices.length - 1].id;
+                for (const d of devices) {
+                    if (d.label && d.label.toLowerCase().includes('back')) {
+                        cameraId = d.id;
+                        break;
+                    }
+                }
+
+                return html5QrCode.start(
+                    cameraId,
+                    { fps: 10, qrbox: { width: 260, height: 260 } },
+                    onScanSuccess,
+                    () => {}
+                );
+            })
+            .then(() => { scanning = true; })
+            .catch(err => {
+                const msg = err.toString().includes('Permission')
+                    ? '❌ Bị từ chối quyền camera. Vào Cài đặt → Trình duyệt → Cho phép Camera.'
+                    : '❌ Không mở được camera: ' + err;
+                showResult(msg, 'error');
+                stopScanner();
+            });
+    }
+
+    function onScanSuccess(decodedText) {
+        const now = Date.now();
+        if (decodedText === lastCode && now - lastTime < 3000) return;
+        lastCode = decodedText;
+        lastTime = now;
+
+        const maHV = decodedText.split('\n')[0].trim().toUpperCase();
+        processAttendance(maHV);
+    }
+
+    function stopScanner() {
+        scanning = false;
+        document.getElementById('reader').style.display = 'none';
+        document.getElementById('scanBtn').style.display = 'block';
+        document.getElementById('stopBtn').style.display = 'none';
+        if (html5QrCode) {
+            html5QrCode.stop().catch(() => {});
+            html5QrCode = null;
         }
-        
-        window.onload = function() { loadTodayAttendance(); handleScannedResult(); loadThongKe(); };
-    </script>
+    }
+
+    // ========== GỬI ĐIỂM DANH ==========
+    async function processAttendance(maHV) {
+        showResult('<span class="spinner"></span> Đang xử lý <strong>' + escapeHtml(maHV) + '</strong>...', 'loading');
+
+        try {
+            // Dùng GET để tránh CORS
+            const url = `${SCRIPT_URL}?action=attendance&maHV=${encodeURIComponent(maHV)}&mode=${currentMode}`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (data.ok) {
+                showResult(data.message, 'success');
+                if (data.student) showStudentInfo(data.student, data.time, currentMode === 'vao');
+                setTimeout(stopScanner, 1500);
+                loadTodayAttendance();
+            } else {
+                showResult(data.message || '❌ Có lỗi xảy ra', 'error');
+            }
+        } catch (err) {
+            showResult('❌ Lỗi kết nối đến server. Kiểm tra URL và thử lại.<br><small>' + err + '</small>', 'error');
+        }
+    }
+
+    // ========== HIỂN THỊ ==========
+    function showResult(html, type) {
+        const box = document.getElementById('resultBox');
+        box.innerHTML = html;
+        box.className = 'result-box ' + type;
+        box.style.display = 'block';
+        if (type !== 'loading') {
+            setTimeout(() => { box.style.display = 'none'; }, 6000);
+        }
+    }
+
+    function showStudentInfo(student, time, isVao) {
+        const div = document.getElementById('studentInfo');
+        const color = isVao ? '#1e7e34' : '#1a73e8';
+        const label = isVao ? '📥 VÀO LỚP' : '📤 RA VỀ';
+        div.innerHTML = `
+            <div class="student-top">
+                <span style="font-size:22px;">${isVao ? '📥' : '📤'}</span>
+                <span class="badge" style="background:${color}18;color:${color};">${label}</span>
+            </div>
+            <div class="student-name">${escapeHtml(student.hoTen)}</div>
+            <div class="student-detail">
+                📛 Mã HV: <strong>${escapeHtml(student.ma)}</strong><br>
+                ⛪ Tên Thánh: ${escapeHtml(student.tenThanh)}<br>
+                🕐 Thời gian: <strong>${escapeHtml(time)}</strong><br>
+                📞 Phụ huynh: ${escapeHtml(student.ph)}
+            </div>
+        `;
+        div.style.display = 'block';
+        setTimeout(() => { div.style.display = 'none'; }, 9000);
+    }
+
+    // ========== DANH SÁCH HÔM NAY ==========
+    async function loadTodayAttendance() {
+        if (!SCRIPT_URL) return;
+        const el = document.getElementById('todayList');
+        el.innerHTML = '<div class="loading">⏳ Đang tải...</div>';
+        try {
+            const res = await fetch(`${SCRIPT_URL}?action=getToday`);
+            const data = await res.json();
+            if (!data || data.length === 0) {
+                el.innerHTML = '<div class="loading">📭 Chưa có điểm danh nào hôm nay</div>';
+                return;
+            }
+            el.innerHTML = data.map(item => `
+                <div class="attendance-item">
+                    <div>
+                        <div class="name">${escapeHtml(item.hoTen)}</div>
+                        <div class="sub">${escapeHtml(item.tenThanh)} · ${escapeHtml(item.maHV)}</div>
+                    </div>
+                    <div>
+                        ${item.gioVao ? `<span class="badge-vao">📥 ${item.gioVao}</span>` : ''}
+                        ${item.gioRa  ? `<span class="badge-ra">📤 ${item.gioRa}</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            el.innerHTML = '<div style="color:red;text-align:center;padding:16px;">❌ Lỗi tải dữ liệu</div>';
+        }
+    }
+
+    // ========== BIỂU ĐỒ ==========
+    let chartToday, chartTop;
+
+    async function loadThongKe() {
+        if (!SCRIPT_URL) return;
+        try {
+            const res = await fetch(`${SCRIPT_URL}?action=thongKeHomNay`);
+            const d = await res.json();
+            if (chartToday) chartToday.destroy();
+            chartToday = new Chart(document.getElementById('chartToday'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Đã đến', 'Vắng mặt', 'Đi muộn'],
+                    datasets: [{ data: [d.daDen, d.chuaDen, d.diMuon], backgroundColor: ['#34a853', '#ea4335', '#fbbc04'], borderWidth: 0 }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+            document.getElementById('statsText').innerHTML =
+                `✅ Đã đến: <strong>${d.daDen}</strong> &nbsp;|&nbsp; ❌ Vắng: <strong>${d.chuaDen}</strong> &nbsp;|&nbsp; ⏰ Muộn: <strong>${d.diMuon}</strong>`;
+        } catch (e) {}
+
+        try {
+            const res2 = await fetch(`${SCRIPT_URL}?action=thongKeTopHocVien`);
+            const d2 = await res2.json();
+            if (!d2 || d2.length === 0) return;
+            if (chartTop) chartTop.destroy();
+            chartTop = new Chart(document.getElementById('chartTop'), {
+                type: 'bar',
+                data: {
+                    labels: d2.map(s => s.hoTen),
+                    datasets: [{ label: 'Số buổi', data: d2.map(s => s.soBuoi), backgroundColor: '#1a73e8', borderRadius: 6 }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        } catch (e) {}
+    }
+
+    function loadAll() {
+        loadTodayAttendance();
+        loadThongKe();
+    }
+
+    // ========== TIỆN ÍCH ==========
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.toString().replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
+        );
+    }
+</script>
 </body>
 </html>
